@@ -12,7 +12,8 @@
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "installer": "npm run build && npm install -g && npm run message",
-    "message": "echo 'Installation complete. Please type xkite-cli in the terminal to test.'"
+    "message": "echo 'Installation complete. Please type xkite-cli in the terminal to test.'",
+    "push": "npm publish --access public"
   },
   "homepage": "https://github.com/oslabs-beta/xkite-cli",
   "repository": {
