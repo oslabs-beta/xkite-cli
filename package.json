@@ -1,6 +1,6 @@
 {
   "name": "xkite-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A CLI for xkite-core library",
   "main": "dist/index.js",
   "bin": {
@@ -11,7 +11,8 @@
     "build": "npm run clean && npx tsc",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "installer": "npm run build && npm install -g && echo 'Installation complete. Please type xkite-cli in the terminal to test.'"
+    "installer": "npm run build && npm install -g && npm run message",
+    "message": "echo 'Installation complete. Please type xkite-cli in the terminal to test.'"
   },
   "homepage": "https://github.com/oslabs-beta/xkite-cli",
   "repository": {
@@ -29,8 +30,19 @@
   "author": "Zahara Aviv <zahara.aviv@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@reduxjs/toolkit": "^1.9.3",
+    "@types/fs-extra": "^11.0.1",
+    "@types/get-port": "^4.2.0",
+    "@types/js-yaml": "^4.0.5",
     "commander": "^10.0.0",
-    "figlet": "^1.5.2"
+    "docker-compose": "^0.23.19",
+    "figlet": "^1.5.2",
+    "fs-extra": "^11.1.0",
+    "get-port": "^6.1.2",
+    "js-yaml": "^4.1.0",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
+    "zip-local": "^0.3.5"
   },
   "devDependencies": {
     "@types/node": "^18.15.0",
