@@ -1,0 +1,326 @@
+#! /usr/bin/env node
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const { Command } = require('commander');
+const figlet = require('figlet');
+const fs = require('fs');
+const path = require('path');
+const xkite_core_1 = __importDefault(require("xkite-core"));
+const xkite_core_2 = require("xkite-core");
+const xkite_core_3 = require("xkite-core");
+const program = new Command();
+// ASCII ART
+console.log(figlet.textSync('xkite'));
+program
+    .version('1.0.0')
+    .description('CLI for xkite, an Apache Kafka Prototype and Test Tool')
+    .option('-s, --server <server:port>', 'connect to an xkite server') //
+    .option('-i, --input <value>', 'Input configuration file for xkite') // file
+    .option('-p --pause ', 'Pauses active docker instances')
+    .option('-b, --broker <# of brokers> <# of replicas> <port1,...,portn> <1 = enable jmx>', 'Kafka broker setup (default to 1 if not chosen)')
+    .option('-z, --zookeeper <# of zookeepers> <port1,...,portn>', 'Zookeeper setup (default to 1 if not chosen)')
+    .option('-db, --database <type: ksql | postgresql> <port>', 'Creates Source Database (default none if not chosen)')
+    .option('-sk, --sink <type: jupyter | spark> <port>', 'Creates Sink at specified port (default none if not chosen)')
+    .option('-gr, --grafana <port>', 'Creates Grafana instance at specified port (default none if not chosen')
+    .option('-pr, --prometheus <port> <scrape_interval> <evaluation_interval>', 'Creates Prometheus instance at specified port with settings for scrape and eval interval (in seconds)')
+    .option('-c, --configure', 'Configures docker instances based off input configuration') // default create after deploy
+    .option('-o, --output <value>', 'Output directory for package.zip for current configuration') //default to current dir
+    .option('-r --run ', 'Runs configured docker instances') // either deploy or unpause
+    .option('-p --pause ', 'Pauses active docker instances')
+    .option('-q --quit ', 'Shuts down all docker instances and removes associated container/volumes')
+    .parse(process.argv);
+const options = program.opts();
+// Option functions
+let config;
+const selectedPorts = new Set();
+function readInputFile(filepath) {
+    try {
+        const file = fs.readFileSync(filepath, 'utf-8');
+        config = JSON.parse(file);
+    }
+    catch (error) {
+        console.error('Error occurred while reading input file!', error);
+    }
+}
+function configureBrokers(n, r, ports, jmxEn) {
+    try {
+        if (n === undefined)
+            throw TypeError('missing');
+        let brokerPorts;
+        if (ports.search(',') >= 0)
+            brokerPorts = ports.split(',').map((p) => Number(p));
+        else
+            brokerPorts = [Number(ports)];
+        const nBrokers = Number(n);
+        if (nBrokers > xkite_core_3.MAX_NUMBER_OF_BROKERS)
+            throw TypeError(`Number of Brokers (${nBrokers}) exceeds ${xkite_core_3.MAX_NUMBER_OF_BROKERS}`);
+        const nReplicas = Number(r) <= nBrokers ? Number(r) : nBrokers;
+        let newCfg = {
+            kafka: {
+                brokers: {
+                    size: nBrokers,
+                    replicas: nReplicas !== null && nReplicas !== void 0 ? nReplicas : nBrokers,
+                    ports: {
+                        brokers: brokerPorts
+                    }
+                },
+                zookeepers: {
+                    //default
+                    size: 1,
+                    ports: {
+                        client: [xkite_core_2._ports_.zookeeper.client.external]
+                    }
+                }
+            }
+        };
+        if (jmxEn === '1') {
+            newCfg = Object.assign(Object.assign({}, newCfg), { kafka: Object.assign(Object.assign({}, newCfg.kafka), { jmx: { ports: new Array(nBrokers).fill(xkite_core_2._ports_.jmx.external) } }) });
+        }
+        config = Object.assign({}, config, newCfg);
+    }
+    catch (error) {
+        console.error('Error while configuring brokers for kite!', error);
+    }
+}
+function configureZookeepers(n, ports) {
+    try {
+        if (n === undefined)
+            throw TypeError('missing');
+        let zkPorts;
+        if (ports !== undefined) {
+            if (ports.search(',') >= 0)
+                zkPorts = ports.split(',').map((p) => Number(p));
+            else
+                zkPorts = [Number(ports)];
+        }
+        const nZk = Number(n);
+        if (nZk > xkite_core_3.MAX_NUMBER_OF_ZOOKEEPERS)
+            throw TypeError(`Number of Brokers (${nZk}) exceeds ${xkite_core_3.MAX_NUMBER_OF_BROKERS}`);
+        config = Object.assign(Object.assign({}, config), { kafka: Object.assign(Object.assign({}, config.kafka), { zookeepers: Object.assign(Object.assign({}, config.kafka.zookeepers), { size: nZk, ports: {
+                        client: zkPorts !== null && zkPorts !== void 0 ? zkPorts : new Array(nZk).fill(xkite_core_2._ports_.zookeeper.client.external)
+                    } }) }) });
+    }
+    catch (error) {
+        console.error('Error while configuring zookeeper for kite!', error);
+    }
+}
+function configureDB(name, port) {
+    var _a, _b;
+    try {
+        if (name === undefined)
+            throw TypeError('missing');
+        config = Object.assign(Object.assign({}, config), { db: Object.assign(Object.assign({}, config.db), { name: name === 'ksql' ? name : 'postgresql', port: name === 'ksql'
+                    ? (_a = Number(port)) !== null && _a !== void 0 ? _a : xkite_core_2._ports_.ksql.external
+                    : (_b = Number(port)) !== null && _b !== void 0 ? _b : xkite_core_2._ports_.postgresql.external, kafkaconnect: {
+                    port: xkite_core_2._ports_.kafkaconnect_src.external
+                } }) });
+    }
+    catch (error) {
+        console.error('Error while configuring db for kite!', error);
+    }
+}
+function configureSink(name, port) {
+    var _a, _b;
+    try {
+        if (name === undefined)
+            throw TypeError('missing');
+        config = Object.assign(Object.assign({}, config), { sink: Object.assign(Object.assign({}, config.sink), { name: name === 'spark' ? name : 'jupyter', port: name === 'spark'
+                    ? (_a = Number(port)) !== null && _a !== void 0 ? _a : xkite_core_2._ports_.spark.webui.external
+                    : (_b = Number(port)) !== null && _b !== void 0 ? _b : xkite_core_2._ports_.jupyter.external, kafkaconnect: {
+                    port: xkite_core_2._ports_.kafkaconnect_sink.external
+                } }) });
+    }
+    catch (error) {
+        console.error('Error while configuring db for kite!', error);
+    }
+}
+function configureGrafana(port) {
+    var _a;
+    try {
+        config = Object.assign(Object.assign({}, config), { grafana: Object.assign(Object.assign({}, config.grafana), { port: (_a = Number(port)) !== null && _a !== void 0 ? _a : xkite_core_2._ports_.grafana.external }) });
+    }
+    catch (error) {
+        console.error('Error while configuring grafana for kite!', error);
+    }
+}
+function configurePrometheus(port, _scrape, _eval) {
+    var _a, _b, _c;
+    try {
+        config = Object.assign(Object.assign({}, config), { prometheus: Object.assign(Object.assign({}, config.prometheus), { port: (_a = Number(port)) !== null && _a !== void 0 ? _a : xkite_core_2._ports_.prometheus.external, scrape_interval: (_b = Number(_scrape)) !== null && _b !== void 0 ? _b : 10, evaluation_interval: (_c = Number(_eval)) !== null && _c !== void 0 ? _c : 5 }) });
+    }
+    catch (error) {
+        console.error('Error while configuring grafana for kite!', error);
+    }
+}
+function connect(server) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield xkite_core_1.default.configure(server);
+        }
+        catch (error) {
+            console.error('Error while configuring kite!', error);
+        }
+    });
+}
+function configure() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (config === undefined)
+                console.log('No configuration provided, using default');
+            yield xkite_core_1.default.configure(config);
+        }
+        catch (error) {
+            console.error('Error while configuring kite!', error);
+        }
+    });
+}
+function output(filepath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const pkg = yield xkite_core_1.default.getPackageBuild();
+            if (filepath !== undefined)
+                fs.writeFileSync(path.resolve(filepath, 'package.zip'), pkg.fileStream);
+            else
+                fs.writeFileSync(path.resolve(__dirname, 'package.zip'), pkg.fileStream);
+        }
+        catch (error) {
+            console.error('Error while writing package.zip from kite!', error);
+        }
+    });
+}
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (xkite_core_1.default.getKiteState() === xkite_core_2.KiteState.Paused)
+                yield xkite_core_1.default.unpause();
+            else
+                yield xkite_core_1.default.deploy();
+        }
+        catch (error) {
+            console.error('Error while running kite!', error);
+        }
+    });
+}
+function pause() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield xkite_core_1.default.pause();
+        }
+        catch (error) {
+            console.error('Error while running kite!', error);
+        }
+    });
+}
+function quit() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield xkite_core_1.default.shutdown();
+        }
+        catch (error) {
+            console.error('Error while running kite!', error);
+        }
+    });
+}
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (options.server) {
+            yield connect(options.server);
+        }
+        if (options.input) {
+            // using a file + cmd line
+            readInputFile(options.input);
+            configOptions();
+            yield configure();
+        }
+        else if (configOptions()) {
+            //cmd line configuration
+            yield configure();
+        }
+        // can only run one of the following at a time
+        if (options.quit) {
+            yield quit();
+        }
+        else if (options.run) {
+            yield run();
+        }
+        else if (options.pause) {
+            yield pause();
+        }
+        if (options.output) {
+            yield output(options.output);
+        }
+    });
+}
+function findOptions(str, longStr) {
+    let startIdx = -1;
+    let endIdx = -1;
+    for (let i = 0; i < process.argv.length; i++) {
+        if (process.argv[i] === str || process.argv[i] === longStr) {
+            let j = i + 1;
+            startIdx = j;
+            endIdx = j;
+            while (j < process.argv.length && process.argv[j].search('-') !== 0) {
+                endIdx = ++j;
+            }
+            break;
+        }
+    }
+    return process.argv.slice(startIdx, endIdx);
+}
+function configOptions() {
+    let configure = false;
+    if (options.broker) {
+        configure = true;
+        const args = findOptions('-b', '--broker');
+        // console.log(args);
+        configureBrokers(args[0], args[1], args[2], args[3]);
+    }
+    if (options.zookeeper) {
+        configure = true;
+        const args = findOptions('-z', '--zookeeper');
+        // console.log(args);
+        configureZookeepers(args[0], args[1]);
+    }
+    if (options.database) {
+        configure = true;
+        const args = findOptions('-db', '--database');
+        // console.log(args);
+        configureDB(args[0], args[1]);
+    }
+    if (options.sink) {
+        configure = true;
+        const args = findOptions('-sk', '--sink');
+        // console.log(args);
+        configureSink(args[0], args[1]);
+    }
+    if (options.grafana) {
+        configure = true;
+        const args = findOptions('-gr', '--grafana');
+        // console.log(args);
+        configureGrafana(args[0]);
+    }
+    if (options.prometheus) {
+        configure = true;
+        const args = findOptions('-pr', '--prometheus');
+        // console.log(args);
+        configurePrometheus(args[0], args[1], args[2]);
+    }
+    return configure;
+}
+main();
+if (!process.argv.slice(2).length) {
+    program.outputHelp();
+}
+//# sourceMappingURL=index.js.map

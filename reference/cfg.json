@@ -1,0 +1,29 @@
+{
+  "kafka": {
+    "brokers": {
+      "size": 2,
+      "replicas": 2,
+      "ports": { "brokers": [9092, 9093], "jmx": [9991, 9992] }
+    },
+    "zookeepers": { "size": 2, "ports": { "client": [2182, 2183] } },
+    "jmx": { "ports": [5566, 5567] },
+    "spring": { "port": 8080 }
+  },
+  "db": {
+    "name": "postgresql",
+    "port": 5432,
+    "kafkaconnect": { "port": 8083 }
+  },
+  "sink": {
+    "name": "spark",
+    "port": 8090,
+    "rpc_port": 7077,
+    "kafkaconnect": { "port": 8084 }
+  },
+  "grafana": { "port": 3050 },
+  "prometheus": {
+    "scrape_interval": 5,
+    "evaluation_interval": 2,
+    "port": 9099
+  }
+}
