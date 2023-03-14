@@ -1,7 +1,7 @@
 {
   "name": "xkite-cli",
-  "version": "1.0.1",
-  "description": "A CLI for xkite-core library",
+  "version": "1.0.2",
+  "description": "A CLI for xkite-core library for prototyping and testing with Apache Kafka",
   "main": "dist/index.js",
   "bin": {
     "xkite-cli": "./dist/index.js"
@@ -13,7 +13,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "installer": "npm run build && npm install -g && npm run message",
     "message": "echo 'Installation complete. Please type xkite-cli in the terminal to test.'",
-    "push": "npm publish --access public"
+    "push": "npm publish --access public",
+    "dev": "xkite-cli"
   },
   "homepage": "https://github.com/oslabs-beta/xkite-cli",
   "repository": {
@@ -35,19 +36,22 @@
     "@types/fs-extra": "^11.0.1",
     "@types/get-port": "^4.2.0",
     "@types/js-yaml": "^4.0.5",
+    "buffer": "^6.0.3",
     "commander": "^10.0.0",
     "docker-compose": "^0.23.19",
     "figlet": "^1.5.2",
     "fs-extra": "^11.1.0",
     "get-port": "^6.1.2",
     "js-yaml": "^4.1.0",
+    "node-fetch": "^2.6.9",
     "os": "^0.1.2",
     "path": "^0.12.7",
+    "xkite-core": "^1.0.24",
     "zip-local": "^0.3.5"
   },
   "devDependencies": {
     "@types/node": "^18.15.0",
     "typescript": "^4.9.5",
-    "xkite-core": "^1.0.19"
+    "xkite-core": "^1.0.24"
   }
 }

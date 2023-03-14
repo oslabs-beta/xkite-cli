@@ -4,9 +4,14 @@ const { Command } = require('commander');
 const figlet = require('figlet');
 const fs = require('fs');
 const path = require('path');
-import Kite from 'xkite-core';
-import { KiteConfig, KiteState, _ports_ } from 'xkite-core';
-import { MAX_NUMBER_OF_BROKERS, MAX_NUMBER_OF_ZOOKEEPERS } from 'xkite-core';
+const { Kite } = require('xkite-core');
+const { default_ports } = require('xkite-core');
+import type {
+  KiteConfig,
+  KiteState,
+  MAX_NUMBER_OF_BROKERS,
+  MAX_NUMBER_OF_ZOOKEEPERS,
+} from 'xkite-core';
 
 const program = new Command();
 
@@ -16,7 +21,10 @@ console.log(figlet.textSync('xkite'));
 program
   .version('1.0.0')
   .description('CLI for xkite, an Apache Kafka Prototype and Test Tool')
-  .option('-s, --server <server:port>', 'connect to an xkite server') //
+  .option(
+    '-s, --server <server:port>',
+    'connect to an xkite server: i.e xkite-cli -s http://localhost:3000'
+  ) //
   .option('-i, --input <value>', 'Input configuration file for xkite') // file
   .option('-p --pause ', 'Pauses active docker instances')
   .option(
@@ -81,10 +89,9 @@ function configureBrokers(n: string, r: string, ports: string, jmxEn?: string) {
       brokerPorts = ports.split(',').map((p) => Number(p));
     else brokerPorts = [Number(ports)];
     const nBrokers = Number(n);
-    if (nBrokers > MAX_NUMBER_OF_BROKERS)
-      throw TypeError(
-        `Number of Brokers (${nBrokers}) exceeds ${MAX_NUMBER_OF_BROKERS}`
-      );
+    const max: MAX_NUMBER_OF_BROKERS = 50;
+    if (nBrokers > max)
+      throw TypeError(`Number of Brokers (${nBrokers}) exceeds ${max}`);
     const nReplicas = Number(r) <= nBrokers ? Number(r) : nBrokers;
 
     let newCfg: KiteConfig = {
@@ -93,25 +100,25 @@ function configureBrokers(n: string, r: string, ports: string, jmxEn?: string) {
           size: nBrokers,
           replicas: nReplicas ?? nBrokers,
           ports: {
-            brokers: brokerPorts
-          }
+            brokers: brokerPorts,
+          },
         },
         zookeepers: {
           //default
           size: 1,
           ports: {
-            client: [_ports_.zookeeper.client.external]
-          }
-        }
-      }
+            client: [default_ports.zookeeper.client.external],
+          },
+        },
+      },
     };
     if (jmxEn === '1') {
       newCfg = {
         ...newCfg,
         kafka: {
           ...newCfg.kafka,
-          jmx: { ports: new Array(nBrokers).fill(_ports_.jmx.external) }
-        }
+          jmx: { ports: new Array(nBrokers).fill(default_ports.jmx.external) },
+        },
       };
     }
 
@@ -131,10 +138,8 @@ function configureZookeepers(n: string, ports?: string) {
       else zkPorts = [Number(ports)];
     }
     const nZk = Number(n);
-    if (nZk > MAX_NUMBER_OF_ZOOKEEPERS)
-      throw TypeError(
-        `Number of Brokers (${nZk}) exceeds ${MAX_NUMBER_OF_BROKERS}`
-      );
+    const max: MAX_NUMBER_OF_ZOOKEEPERS = 1000;
+    if (nZk > max) throw TypeError(`Number of Brokers (${nZk}) exceeds ${max}`);
     config = {
       ...config,
       kafka: {
@@ -144,10 +149,11 @@ function configureZookeepers(n: string, ports?: string) {
           size: nZk,
           ports: {
             client:
-              zkPorts ?? new Array(nZk).fill(_ports_.zookeeper.client.external)
-          }
-        }
-      }
+              zkPorts ??
+              new Array(nZk).fill(default_ports.zookeeper.client.external),
+          },
+        },
+      },
     };
   } catch (error) {
     console.error('Error while configuring zookeeper for kite!', error);
@@ -165,12 +171,12 @@ function configureDB(name: string, port?: string) {
         name: name === 'ksql' ? name : 'postgresql',
         port:
           name === 'ksql'
-            ? Number(port) ?? _ports_.ksql.external
-            : Number(port) ?? _ports_.postgresql.external,
+            ? Number(port) ?? default_ports.ksql.external
+            : Number(port) ?? default_ports.postgresql.external,
         kafkaconnect: {
-          port: _ports_.kafkaconnect_src.external
-        }
-      }
+          port: default_ports.kafkaconnect_src.external,
+        },
+      },
     };
   } catch (error) {
     console.error('Error while configuring db for kite!', error);
@@ -188,12 +194,12 @@ function configureSink(name: string, port?: string) {
         name: name === 'spark' ? name : 'jupyter',
         port:
           name === 'spark'
-            ? Number(port) ?? _ports_.spark.webui.external
-            : Number(port) ?? _ports_.jupyter.external,
+            ? Number(port) ?? default_ports.spark.webui.external
+            : Number(port) ?? default_ports.jupyter.external,
         kafkaconnect: {
-          port: _ports_.kafkaconnect_sink.external
-        }
-      }
+          port: default_ports.kafkaconnect_sink.external,
+        },
+      },
     };
   } catch (error) {
     console.error('Error while configuring db for kite!', error);
@@ -206,8 +212,8 @@ function configureGrafana(port?: string) {
       ...config,
       grafana: {
         ...config.grafana,
-        port: Number(port) ?? _ports_.grafana.external
-      }
+        port: Number(port) ?? default_ports.grafana.external,
+      },
     };
   } catch (error) {
     console.error('Error while configuring grafana for kite!', error);
@@ -220,10 +226,10 @@ function configurePrometheus(port?: string, _scrape?: string, _eval?: string) {
       ...config,
       prometheus: {
         ...config.prometheus,
-        port: Number(port) ?? _ports_.prometheus.external,
+        port: Number(port) ?? default_ports.prometheus.external,
         scrape_interval: Number(_scrape) ?? 10,
-        evaluation_interval: Number(_eval) ?? 5
-      }
+        evaluation_interval: Number(_eval) ?? 5,
+      },
     };
   } catch (error) {
     console.error('Error while configuring grafana for kite!', error);
@@ -252,9 +258,16 @@ async function output(filepath?: string) {
   try {
     const pkg = await Kite.getPackageBuild();
     if (filepath !== undefined)
-      fs.writeFileSync(path.resolve(filepath, 'package.zip'), pkg.fileStream);
+      fs.writeFileSync(
+        path.resolve(filepath, 'package.zip'),
+        Buffer.from(pkg.fileStream)
+      );
     else
-      fs.writeFileSync(path.resolve(__dirname, 'package.zip'), pkg.fileStream);
+      fs.writeFileSync(
+        path.resolve(__dirname, 'package.zip'),
+        Buffer.from(pkg.fileStream)
+      );
+    // }
   } catch (error) {
     console.error('Error while writing package.zip from kite!', error);
   }
@@ -262,7 +275,8 @@ async function output(filepath?: string) {
 
 async function run() {
   try {
-    if (Kite.getKiteState() === KiteState.Paused) await Kite.unpause();
+    if (((await Kite.getKiteState()) as KiteState) === 'Paused')
+      await Kite.unpause();
     else await Kite.deploy();
   } catch (error) {
     console.error('Error while running kite!', error);
@@ -288,6 +302,7 @@ async function quit() {
 async function main() {
   if (options.server) {
     await connect(options.server);
+    console.log(`Kite remote server state = ${Kite.getKiteServerState()}`);
   }
   if (options.input) {
     // using a file + cmd line
