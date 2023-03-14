@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 const { execSync } = require('child_process');
 
 const runCommand = (command) => {
@@ -25,4 +26,4 @@ if (!installedDeps) process.exit();
 console.log(`Congratulations! Please follow the prompts to continue:`);
 console.log('You can use the xkite-cli command in your terminal or');
 console.log(`1. cd ${repoName}`);
-console.log(`2. npm run dev`);
+console.log(`2. npx xkite-cli`);
