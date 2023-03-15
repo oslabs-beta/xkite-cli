@@ -1,6 +1,7 @@
 # xkite-cli <br> ![version](https://img.shields.io/badge/version-1.0.5-blue.svg) ![license](https://img.shields.io/badge/license-MIT-blue.svg) <span><a href="https://xkite.io/"><img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" /></a></span>
 
-Command Line Interface for xkite, a Kafka Integrated Testing Environment. Another tool in the xkite library to give developers flexibility and control over their Kafka ecosystems.
+### Command Line Interface for xkite, a Kafka Integrated Testing Environment.
+Another tool in the xkite library to give developers flexibility and control over their Kafka ecosystems.
 
 - Easy to use Command Line Interface (CLI) to interact with the xkite-core library. It’s a simple alternative to the full xkite GUI, meant to provide users with the ability to automate their testing using scripts.
 - Configure a custom docker ecosystem using command line inputs or a <code>config.json</code> file, deploy, pause/unpause, shutdown and remove containers and volumes.
