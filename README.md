@@ -1,27 +1,26 @@
-# xkite-cli ![version](https://img.shields.io/badge/version-1.0.5-blue.svg) ![license](https://img.shields.io/badge/license-MIT-blue.svg)
+# xkite-cli <br> ![version](https://img.shields.io/badge/version-1.0.5-blue.svg) ![license](https://img.shields.io/badge/license-MIT-blue.svg) <span><a href="https://xkite.io/"><img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" /></a></span>
 
-<div align="center">
-    <a href="https://xkite.io/">
-        <img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" />
-    </a>
-</div>
-
-Command Line Interface for xkite, a Kafka Integrated Testing Environment. Another tool in the xkite library to give the user flexibility and control over their Kafka ecosystem.
+Command Line Interface for xkite, a Kafka Integrated Testing Environment. Another tool in the xkite library to give developers flexibility and control over their Kafka ecosystems.
 
 - Easy to use Command Line Interface (CLI) to interact with the xkite-core library. It’s a simple alternative to the full xkite GUI, meant to provide users with the ability to automate their testing using scripts.
-- Configure a custom docker ecosystem using command line inputs or a <code>config.json</code> file, deploy, pause/ unpause, shutdown, and remove containers and volumes.
-- Download the docker ecosystem configuration (package.zip) containing the docker-compose.yml file and dependencies in order to deploy their ecosystem on a cloud instance/remote server by simply running docker-compose up.
-- Acts as a remote client to interface with the xkite GUI server. The user can perform all the aforementioned functions provided remotely on the xkite GUI server by providing the URL as a configuration input.
-- More granular control over which docker images they choose to deploy (something that is not configurable currently with the xkite GUI).
+- Configure a custom docker ecosystem using command line inputs or a <code>config.json</code> file, deploy, pause/unpause, shutdown and remove containers and volumes.
+- Export the docker ecosystem configuration to a package.zip file containing the docker-compose.yml file and dependencies needed to deploy your kafka ecosystem to any cloud instance or remote server. Simply unzip and run `docker-compose up`.
+- Interface with the xkite GUI server as a remote client. You can perform all the aforementioned functions provided remotely on the xkite GUI server by providing the URL as a configuration input.
+- More granular control over which docker images you choose to deploy (currently unconfigurable with the xkite GUI).
 
-# Dependencies
+## Dependencies
+The latest stable versions of: 
+- <a href="https://nodejs.org/en/">Node.js and NPM</a>
+- <a href="https://docs.docker.com/compose/install/">docker-compose</a>
 
-- Latest stable versions of Node.js and NPM installed
-- Latest stable version of <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed.
-- Clone repository: <code>git clone https://github.com/oslabs-beta/xkite-cli.git</code>
-- Install dependencies: Run <code>npm install</code> inside the project folder
+## Installation
+1) Clone this Repository <br>
+<code>git clone https://github.com/oslabs-beta/xkite-cli.git</code>
 
-# Quickstart
+2) Install Dependencies <br>
+<code>cd</code> into the cloned repository and run <code>npm install</code>
+
+## Quickstart
 
 To install the <code>xkite-cli</code> into your environment just simply run the following command:
 
@@ -35,13 +34,13 @@ After the installation is complete, you will be able to run <code>xkite-cli</cod
   $ xkite-cli
 ```
 
-# How It Works
+## How It Works
 
 The xkite-cli interfaces with the xkite-core library allowing the user to configure a YAML file, managing docker containers (configure, run, pause, and shutdown), interfacing with remote xkite servers, and providing configuration settings for users to easily connect to their Kafka instances for development purposes.
 
 To learn more about xkite-core please follow the link: <a href="https://github.com/oslabs-beta/xkite-core">xkite-core library</a>
 
-# xkite-cli Options
+## xkite-cli Options
 
 Click to expand details.
 
