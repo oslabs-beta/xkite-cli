@@ -754,7 +754,7 @@ docker deployment successful
 
 </details>
 
-<details><summary><b>-pr, --prometheus < port > < scrape_interval > < evaluation_interval ></b></summary>
+<details><summary><b>-pr | --prometheus < port > < scrape_interval > < evaluation_interval ></b></summary>
 
 Creates a configuration with a prometheus container at external port provided and with scrape/evaluation interval settings. If no interval settings are provide, then defaults will be used. If no Broker or Zookeepers are defined in the the input arguments it will use two brokers, one zookeeper, a spring and a JMX instances for the configuration. See example below:
 
