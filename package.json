@@ -1,10 +1,9 @@
 {
   "name": "xkite-cli",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A CLI for xkite-core library for prototyping and testing with Apache Kafka",
   "main": "dist/index.js",
   "bin": {
-    "create-xkite-cli": "./bin/create-xkite-cli.js",
     "xkite-cli": "./dist/index.js"
   },
   "scripts": {
