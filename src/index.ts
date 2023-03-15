@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const { Kite } = require('xkite-core');
 const { default_ports } = require('xkite-core');
+const pjson = require('../package.json');
+
 import type {
   KiteConfig,
   KiteState,
@@ -19,14 +21,13 @@ const program = new Command();
 console.log(figlet.textSync('xkite'));
 
 program
-  .version('1.0.0')
+  .version(pjson.version)
   .description('CLI for xkite, an Apache Kafka Prototype and Test Tool')
   .option(
     '-s, --server <server:port>',
     'connect to an xkite server: i.e xkite-cli -s http://localhost:3000'
   ) //
   .option('-i, --input <value>', 'Input configuration file for xkite') // file
-  .option('-p --pause ', 'Pauses active docker instances')
   .option(
     '-b, --broker <# of brokers> <# of replicas> <port1,...,portn> <1 = enable jmx>',
     'Kafka broker setup (default to 1 if not chosen)'
@@ -51,10 +52,6 @@ program
     '-pr, --prometheus <port> <scrape_interval> <evaluation_interval>',
     'Creates Prometheus instance at specified port with settings for scrape and eval interval (in seconds)'
   )
-  .option(
-    '-c, --configure',
-    'Configures docker instances based off input configuration'
-  ) // default create after deploy
   .option(
     '-o, --output <value>',
     'Output directory for package.zip for current configuration'
@@ -112,19 +109,32 @@ function configureBrokers(n: string, r: string, ports: string, jmxEn?: string) {
         },
       },
     };
-    if (jmxEn === '1') {
-      newCfg = {
-        ...newCfg,
-        kafka: {
-          ...newCfg.kafka,
-          jmx: { ports: new Array(nBrokers).fill(default_ports.jmx.external) },
-        },
-      };
-    }
+    if (jmxEn === '1') configureJMX();
 
     config = Object.assign({}, config, newCfg);
   } catch (error) {
     console.error('Error while configuring brokers for kite!', error);
+  }
+}
+
+function configureJMX(ports?: string) {
+  try {
+    if (config === undefined || config.kafka === undefined)
+      configureBrokers('2', '2', '9092,9093');
+    const newCfg: KiteConfig = {
+      ...config,
+      kafka: {
+        ...config.kafka,
+        jmx: {
+          ports: new Array(config.kafka.brokers.size).fill(
+            default_ports.jmx.external
+          ),
+        },
+      },
+    };
+    config = Object.assign({}, config, newCfg);
+  } catch (error) {
+    console.error('Error while configuring JMX for kite!', error);
   }
 }
 
@@ -140,7 +150,9 @@ function configureZookeepers(n: string, ports?: string) {
     const nZk = Number(n);
     const max: MAX_NUMBER_OF_ZOOKEEPERS = 1000;
     if (nZk > max) throw TypeError(`Number of Brokers (${nZk}) exceeds ${max}`);
-    config = {
+    if (config === undefined || config.kafka === undefined)
+      configureBrokers('2', '2', '9092,9093');
+    const newCfg = {
       ...config,
       kafka: {
         ...config.kafka,
@@ -155,6 +167,7 @@ function configureZookeepers(n: string, ports?: string) {
         },
       },
     };
+    config = Object.assign({}, config, newCfg);
   } catch (error) {
     console.error('Error while configuring zookeeper for kite!', error);
   }
@@ -163,7 +176,8 @@ function configureZookeepers(n: string, ports?: string) {
 function configureDB(name: string, port?: string) {
   try {
     if (name === undefined) throw TypeError('missing');
-
+    if (config === undefined || config.kafka === undefined)
+      configureBrokers('2', '2', '9092,9093');
     config = {
       ...config,
       db: {
@@ -171,8 +185,12 @@ function configureDB(name: string, port?: string) {
         name: name === 'ksql' ? name : 'postgresql',
         port:
           name === 'ksql'
-            ? Number(port) ?? default_ports.ksql.external
-            : Number(port) ?? default_ports.postgresql.external,
+            ? port !== undefined
+              ? Number(port)
+              : default_ports.ksql.external
+            : port !== undefined
+            ? Number(port)
+            : default_ports.postgresql.external,
         kafkaconnect: {
           port: default_ports.kafkaconnect_src.external,
         },
@@ -186,6 +204,8 @@ function configureDB(name: string, port?: string) {
 function configureSink(name: string, port?: string) {
   try {
     if (name === undefined) throw TypeError('missing');
+    if (config === undefined || config.kafka === undefined)
+      configureBrokers('2', '2', '9092,9093');
 
     config = {
       ...config,
@@ -194,8 +214,12 @@ function configureSink(name: string, port?: string) {
         name: name === 'spark' ? name : 'jupyter',
         port:
           name === 'spark'
-            ? Number(port) ?? default_ports.spark.webui.external
-            : Number(port) ?? default_ports.jupyter.external,
+            ? port !== undefined
+              ? Number(port)
+              : default_ports.spark.webui.external
+            : port !== undefined
+            ? Number(port)
+            : default_ports.jupyter.external,
         kafkaconnect: {
           port: default_ports.kafkaconnect_sink.external,
         },
@@ -208,11 +232,14 @@ function configureSink(name: string, port?: string) {
 
 function configureGrafana(port?: string) {
   try {
+    if (config === undefined || config.prometheus === undefined)
+      configurePrometheus();
     config = {
       ...config,
       grafana: {
         ...config.grafana,
-        port: Number(port) ?? default_ports.grafana.external,
+        port:
+          port !== undefined ? Number(port) : default_ports.grafana.external,
       },
     };
   } catch (error) {
@@ -220,15 +247,42 @@ function configureGrafana(port?: string) {
   }
 }
 
+function configureSpring(port?: string) {
+  try {
+    if (config === undefined || config.kafka === undefined)
+      configureBrokers('2', '2', '9092,9093', '1');
+    config = {
+      ...config,
+      kafka: {
+        ...config.kafka,
+        spring: {
+          port:
+            port !== undefined ? Number(port) : default_ports.spring.external,
+        },
+      },
+    };
+  } catch (error) {
+    console.error('Error while configuring spring for kite!', error);
+  }
+}
+
 function configurePrometheus(port?: string, _scrape?: string, _eval?: string) {
   try {
+    if (config === undefined || config.kafka === undefined) {
+      configureBrokers('2', '2', '9092,9093', '1');
+    }
+    if (config.kafka.jmx === undefined) {
+      configureJMX();
+    }
+    configureSpring();
     config = {
       ...config,
       prometheus: {
         ...config.prometheus,
-        port: Number(port) ?? default_ports.prometheus.external,
-        scrape_interval: Number(_scrape) ?? 10,
-        evaluation_interval: Number(_eval) ?? 5,
+        port:
+          port !== undefined ? Number(port) : default_ports.prometheus.external,
+        scrape_interval: _scrape !== undefined ? Number(_scrape) : 10,
+        evaluation_interval: _eval !== undefined ? Number(_eval) : 5,
       },
     };
   } catch (error) {
