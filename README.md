@@ -1,3 +1,4 @@
+![xkite CLI](https://raw.githubusercontent.com/oslabs-beta/xkite/main/images/banner_800x450.png)
 # xkite-cli <br> ![version](https://img.shields.io/badge/version-1.0.5-blue.svg) ![license](https://img.shields.io/badge/license-MIT-blue.svg) <span><a href="https://xkite.io/"><img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social" /></a></span>
 
 ### Command Line Interface for xkite, a Kafka Integrated Testing Environment.
